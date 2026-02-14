@@ -1,107 +1,190 @@
+// Slide-based navigation system
+const sections = [
+  { id: 'about', element: null },
+  { id: 'experience', element: null },
+  { id: 'skills', element: null },
+  { id: 'education', element: null },
+  { id: 'contact', element: null }
+];
+
+let currentSectionIndex = 0;
 const body = document.body;
-const btnTheme = document.querySelector(".fa-moon");
-const btnHamburger = document.querySelector(".fa-bars");
-const favicon = document.getElementById("favicon");
-const logo = document.getElementById("logo");
-const getBodyTheme = localStorage.getItem("portfolio-theme");
-const getBtnTheme = localStorage.getItem("portfolio-btn-theme");
+const themeToggleBtn = document.getElementById('themeToggle');
+const favicon = document.getElementById('favicon');
+const logo = document.getElementById('logo');
+const sidebarItems = document.querySelectorAll('.sidebar__item');
+const prevSlideBtn = document.getElementById('prevSlide');
+const nextSlideBtn = document.getElementById('nextSlide');
 
-//Theme
-const addThemeClass = (bodyClass, btnClass) => {
-  body.classList.add(bodyClass);
-  btnTheme.classList.add(btnClass);
+// Initialize sections
+const initSections = () => {
+  sections.forEach(section => {
+    section.element = document.getElementById(section.id);
+  });
 };
 
-const setTheme = (bodyClass, btnClass) => {
-  if (bodyClass == "dark") {
-    favicon.href = "favicon-dark.ico";
-    logo.src = "favicon-dark.ico";
-  }
-  if (bodyClass == "light") {
-    favicon.href = "favicon-light.ico";
-    logo.src = "favicon-light.ico";
-  }
-
-  body.classList.remove(localStorage.getItem("portfolio-theme"));
-  btnTheme.classList.remove(localStorage.getItem("portfolio-btn-theme"));
-
-  addThemeClass(bodyClass, btnClass);
-
-  localStorage.setItem("portfolio-theme", bodyClass);
-  localStorage.setItem("portfolio-btn-theme", btnClass);
+// Initialize theme from localStorage
+const getBodyTheme = localStorage.getItem('portfolio-theme') || 'light';
+const setInitialTheme = () => {
+  body.classList.add(getBodyTheme);
+  updateThemeUI(getBodyTheme);
 };
 
-const isDark = () => body.classList.contains("dark");
-const toggleTheme = () =>
-  isDark() ? setTheme("light", "fa-moon") : setTheme("dark", "fa-sun");
-btnTheme.addEventListener("click", toggleTheme);
-addThemeClass(getBodyTheme, getBtnTheme);
-const initTheme = () => setTheme(getBodyTheme, getBtnTheme);
-
-//Navbar
-const displayList = () => {
-  const navUl = document.querySelector(".nav__list");
-
-  if (btnHamburger.classList.contains("fa-bars")) {
-    btnHamburger.classList.remove("fa-bars");
-    btnHamburger.classList.add("fa-times");
-    navUl.classList.add("display-nav-list");
+// Update UI based on theme
+const updateThemeUI = (theme) => {
+  if (theme === 'dark') {
+    favicon.href = 'favicon-dark.ico';
+    if (logo) {
+      logo.src = 'favicon-dark.ico';
+    }
+    if (themeToggleBtn) {
+      themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+    }
   } else {
-    btnHamburger.classList.remove("fa-times");
-    btnHamburger.classList.add("fa-bars");
-    navUl.classList.remove("display-nav-list");
+    favicon.href = 'favicon-light.ico';
+    if (logo) {
+      logo.src = 'favicon-light.ico';
+    }
+    if (themeToggleBtn) {
+      themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+    }
   }
 };
-btnHamburger.addEventListener("click", displayList);
 
-//Scroll
-const scrollUp = () => {
-  const btnScrollTop = document.querySelector(".scroll-top");
-
-  if (body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
-    btnScrollTop.style.display = "block";
+// Toggle theme
+const toggleTheme = () => {
+  const isDark = body.classList.contains('dark');
+  
+  if (isDark) {
+    body.classList.remove('dark');
+    body.classList.add('light');
+    localStorage.setItem('portfolio-theme', 'light');
+    updateThemeUI('light');
   } else {
-    btnScrollTop.style.display = "none";
+    body.classList.remove('light');
+    body.classList.add('dark');
+    localStorage.setItem('portfolio-theme', 'dark');
+    updateThemeUI('dark');
   }
 };
-document.addEventListener("scroll", scrollUp);
 
-// MOVE ELEMENT DEPENDING ON SCREEN WIDTH
-function movePosition() {
-  // set element variables
-  var $roleSection = document.getElementById("aboutRole");
-  var $image = document.getElementById("profileImg");
-  var $imageHold = document.getElementById("imgContainer");
-
-  // get window width
-  var $windowWidth = document.documentElement.clientWidth;
-  // positioning if statement
-  if ($windowWidth < 800) {
-    // if below 800px insert after the title and above paragraph
-    $roleSection.parentNode.insertBefore($image, $roleSection);
-    $imageHold.remove();
-  } else {
-    // if above 800px move imageHold (sidebar loctaction)
-    $imageHold.appendChild($image);
-  }
+// Add theme toggle button event listener
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', toggleTheme);
 }
 
-// check document is ready
-var domReady = function (callback) {
-  document.readyState === "interactive" || document.readyState === "complete"
-    ? callback()
-    : document.addEventListener("DOMContentLoaded", callback);
+// Update sidebar active state
+const updateSidebarActive = (index) => {
+  sidebarItems.forEach((item, i) => {
+    if (i === index) {
+      item.classList.add('sidebar__item--active');
+    } else {
+      item.classList.remove('sidebar__item--active');
+    }
+  });
 };
 
-// on document ready
-domReady(function () {
-  // run move function
-  movePosition();
-  initTheme();
+// Navigate to section
+const navigateToSection = (index) => {
+  if (index < 0 || index >= sections.length) return;
+  
+  currentSectionIndex = index;
+  const section = sections[index];
+  
+  if (section.element) {
+    section.element.scrollIntoView({ behavior: 'smooth' });
+    updateSidebarActive(index);
+  }
+};
+
+// Sidebar click navigation
+sidebarItems.forEach((item, index) => {
+  item.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateToSection(index);
+  });
 });
 
-// on window resize
-window.onresize = function (event) {
-  // run move function
-  movePosition();
+// Arrow button navigation
+if (prevSlideBtn) {
+  prevSlideBtn.addEventListener('click', () => {
+    navigateToSection(currentSectionIndex - 1);
+  });
+}
+
+if (nextSlideBtn) {
+  nextSlideBtn.addEventListener('click', () => {
+    navigateToSection(currentSectionIndex + 1);
+  });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  // Arrow up or previous
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+    e.preventDefault();
+    navigateToSection(currentSectionIndex - 1);
+  }
+  // Arrow down or next
+  else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    navigateToSection(currentSectionIndex + 1);
+  }
+  // Ctrl/Cmd + Shift + L to toggle theme
+  else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'L') {
+    e.preventDefault();
+    toggleTheme();
+  }
+});
+
+// Detect current section on scroll
+const detectCurrentSection = () => {
+  const scrollContainer = document.querySelector('.slides-container');
+  if (!scrollContainer) return;
+
+  let closestIndex = 0;
+  let closestDistance = Infinity;
+
+  sections.forEach((section, index) => {
+    if (section.element) {
+      const rect = section.element.getBoundingClientRect();
+      const distance = Math.abs(rect.top);
+      
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    }
+  });
+
+  if (closestIndex !== currentSectionIndex) {
+    currentSectionIndex = closestIndex;
+    updateSidebarActive(closestIndex);
+  }
 };
+
+// Listen for scroll events
+document.addEventListener('scroll', detectCurrentSection);
+
+// Initialize on document load
+document.addEventListener('DOMContentLoaded', () => {
+  initSections();
+  setInitialTheme();
+  updateSidebarActive(0);
+});
+
+// Smooth scroll behavior
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    if (!this.classList.contains('sidebar__item') && 
+        !this.classList.contains('link--nav')) {
+      const href = this.getAttribute('href');
+      const section = sections.find(s => s.id === href.substring(1));
+      if (section) {
+        e.preventDefault();
+        const index = sections.indexOf(section);
+        navigateToSection(index);
+      }
+    }
+  });
+});
